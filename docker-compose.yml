@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    container_name: bfs-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - CORS_ORIGINS=http://localhost:5173
+    networks:
+      - bfs-network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: bfs-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - bfs-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  bfs-network:
+    driver: bridge
+
+volumes:
+  data:
