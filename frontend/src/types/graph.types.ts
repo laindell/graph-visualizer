@@ -71,10 +71,12 @@ export interface BFSMetrics {
 }
 
 export type OrderType = 'id_asc' | 'id_desc' | 'x_asc' | 'x_desc' | 'y_asc' | 'y_desc';
+export type AlgorithmType = 'bfs' | 'dfs';
 
 export interface BFSConfig {
   start_node: string;
   goal_node: string;
   order_type: OrderType;
   speed: number;
+  algorithm_type: AlgorithmType;
 }

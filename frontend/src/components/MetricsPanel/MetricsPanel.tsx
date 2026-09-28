@@ -2,7 +2,8 @@ import React from 'react';
 import { useBFS } from '@/contexts/BFSContext';
 
 export const MetricsPanel: React.FC = () => {
-  const { metrics, result, currentStepData } = useBFS();
+  const { metrics, result, currentStepData, config } = useBFS();
+  const frontierLabel = config?.algorithm_type === 'dfs' ? 'стека' : 'черги';
 
   if (!metrics && !result) {
     return (
@@ -11,7 +12,7 @@ export const MetricsPanel: React.FC = () => {
           Метрики в реальному часі
         </h3>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          Запустіть BFS для перегляду метрик
+          Запустіть алгоритм для перегляду метрик
         </p>
       </div>
     );
@@ -43,7 +44,7 @@ export const MetricsPanel: React.FC = () => {
             </div>
 
             <div className="bg-gray-50 dark:bg-slate-900 rounded-lg p-4">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Розмір черги</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Розмір {frontierLabel}</div>
               <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                 {metrics.queue_size}
               </div>
@@ -51,7 +52,7 @@ export const MetricsPanel: React.FC = () => {
 
             {currentStepData && (
               <div className="bg-gray-50 dark:bg-slate-900 rounded-lg p-4">
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Поточна черга</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Поточний вміст {frontierLabel}</div>
                 <div className="flex flex-wrap gap-2">
                   {currentStepData.queue.length > 0 ? (
                     currentStepData.queue.map((nodeId, idx) => (

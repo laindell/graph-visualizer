@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { BFSStep, BFSResult, BFSMetrics } from '@/types/graph.types';
+import { BFSStep, BFSResult, BFSMetrics, AlgorithmType } from '@/types/graph.types';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -68,7 +68,7 @@ class WebSocketService {
     }
   }
 
-  startBFS(graphId: string, startNode: string, goalNode: string, orderType: string, speed: number): void {
+  startBFS(graphId: string, startNode: string, goalNode: string, orderType: string, speed: number, algorithmType: AlgorithmType = 'bfs'): void {
     if (!this.socket?.connected) {
       console.error('WebSocket not connected');
       return;
@@ -80,6 +80,7 @@ class WebSocketService {
       goal_node: goalNode,
       order_type: orderType,
       speed,
+      algorithm_type: algorithmType,
     });
   }
 

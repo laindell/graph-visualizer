@@ -55,7 +55,7 @@ const AppContent: React.FC = () => {
   const handleNodeSelect = (nodeId: string) => {
     if (!selectedStartNode) {
       setSelectedStartNode(nodeId);
-    } else if (!selectedGoalNode) {
+    } else if (!selectedGoalNode && nodeId !== selectedStartNode) {
       setSelectedGoalNode(nodeId);
     } else {
       setSelectedStartNode(nodeId);
@@ -97,10 +97,10 @@ const AppContent: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Візуалізатор пошуку в ширину
+              Візуалізатор обходу графа
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Інтерактивна візуалізація алгоритму BFS
+              Інтерактивна візуалізація алгоритмів BFS та DFS
             </p>
           </div>
 
@@ -147,8 +147,9 @@ const AppContent: React.FC = () => {
             <div className="space-y-6">
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <strong>Керування:</strong> ПКМ на полотні - створити вершину | 2 кліки на вершини - створити ребро/дугу |
-                  ПКМ на вершині/ребрі - видалити | Shift+подвійний клік на дузі - змінити напрямок (тільки орієнтовані графи)
+                  <strong>Керування:</strong> Клік на вершину - вибрати початок і ціль | ПКМ на полотні - створити вершину |
+                  Ctrl+клік на 2 вершини - створити ребро/дугу | ПКМ на вершині/ребрі - видалити |
+                  Shift+подвійний клік на дузі - змінити напрямок (тільки орієнтовані графи)
                 </div>
               </div>
 
@@ -166,7 +167,12 @@ const AppContent: React.FC = () => {
           </div>
 
           <aside className="w-96 p-6 overflow-auto space-y-6 bg-gray-50 dark:bg-slate-900">
-            <ControlPanel />
+            <ControlPanel
+              startNode={selectedStartNode}
+              goalNode={selectedGoalNode}
+              onStartNodeChange={setSelectedStartNode}
+              onGoalNodeChange={setSelectedGoalNode}
+            />
             <MetricsPanel />
           </aside>
         </main>

@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 from models import Graph, Node, Edge, GraphType
-from algorithms import BFSAlgorithm, get_neighbor_order_function
+from algorithms import BFSAlgorithm, DFSAlgorithm, get_neighbor_order_function
 
 
 class GraphService:
@@ -64,6 +64,9 @@ class GraphService:
         return graph
 
     def prepare_bfs(self, graph_id: str, start: str, goal: str, order_type: str = "id_asc"):
+        return self.prepare_search(graph_id, start, goal, order_type, "bfs")
+
+    def prepare_search(self, graph_id: str, start: str, goal: str, order_type: str = "id_asc", algorithm_type: str = "bfs"):
         graph = self.get_graph(graph_id)
         if not graph:
             raise ValueError(f"Graph {graph_id} not found")
@@ -75,11 +78,20 @@ class GraphService:
         if not graph.are_nodes_connected(start, goal):
             raise ValueError(f"Path does not exist: nodes {start} and {goal} are in different connected components")
 
-        bfs = BFSAlgorithm()
-        neighbor_fn = get_neighbor_order_function(order_type, graph)
-        result = bfs.search(graph, start, goal, neighbor_fn)
+        algorithm_classes = {
+            "bfs": BFSAlgorithm,
+            "dfs": DFSAlgorithm,
+        }
+        algorithm_class = algorithm_classes.get(algorithm_type)
+        if algorithm_class is None:
+            raise ValueError(f"Unsupported algorithm: {algorithm_type}")
 
-        self.bfs_sessions[graph_id] = bfs
+        algorithm = algorithm_class()
+        neighbor_fn = get_neighbor_order_function(order_type, graph)
+        result = algorithm.search(graph, start, goal, neighbor_fn)
+
+        if isinstance(algorithm, BFSAlgorithm):
+            self.bfs_sessions[graph_id] = algorithm
         return result
 
 

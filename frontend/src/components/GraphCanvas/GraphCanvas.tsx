@@ -22,6 +22,7 @@ interface GraphCanvasProps {
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({ startNode, goalNode, onNodeSelect }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
+  const onNodeSelectRef = useRef(onNodeSelect);
   const viewportRef = useRef<{ zoom: number; pan: { x: number; y: number } } | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
@@ -30,6 +31,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({ startNode, goalNode, o
   const { activeGraph, addNode, removeNode, addEdge, removeEdge, updateEdge } = useGraph();
   const { currentStepData, result } = useBFS();
   const { modalState, showConfirm, closeModal } = useModal();
+
+  onNodeSelectRef.current = onNodeSelect;
 
   // Основний useEffect - створення та оновлення Cytoscape
   useEffect(() => {
@@ -65,25 +68,31 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({ startNode, goalNode, o
       const node = evt.target;
       const nodeId = node.id();
 
-      if (selectedSource) {
-        // Другий клік - створюємо ребро
-        if (selectedSource !== nodeId) {
-          const edgeId = `e_${selectedSource}_${nodeId}_${Date.now()}`;
-          const newEdge: Edge = {
-            id: edgeId,
-            source: selectedSource,
-            target: nodeId,
-            directed: activeGraph.graph_type === 'directed',
-            weight: 1.0,
-          };
+      // Ctrl+клік - режим створення ребра
+      if (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey) {
+        if (selectedSource) {
+          // Другий клік - створюємо ребро
+          if (selectedSource !== nodeId) {
+            const edgeId = `e_${selectedSource}_${nodeId}_${Date.now()}`;
+            const newEdge: Edge = {
+              id: edgeId,
+              source: selectedSource,
+              target: nodeId,
+              directed: activeGraph.graph_type === 'directed',
+              weight: 1.0,
+            };
 
-          addEdge(newEdge).catch(console.error);
+            addEdge(newEdge).catch(console.error);
+          }
+          setSelectedSource(null);
+          setMousePosition(null);
+        } else {
+          // Перший клік - вибираємо початкову вершину для ребра
+          setSelectedSource(nodeId);
         }
-        setSelectedSource(null);
-        setMousePosition(null);
       } else {
-        // Перший клік - вибираємо початкову вершину
-        setSelectedSource(nodeId);
+        // Звичайний клік - вибір вершини для BFS (start/goal)
+        onNodeSelectRef.current(nodeId);
       }
     });
 

@@ -52,8 +52,9 @@ async def bfs_start(sid, data):
         goal_node = data.get('goal_node')
         order_type = data.get('order_type', 'id_asc')
         speed = data.get('speed', 1.0)
+        algorithm_type = data.get('algorithm_type', 'bfs')
 
-        result = graph_service.prepare_bfs(graph_id, start_node, goal_node, order_type)
+        result = graph_service.prepare_search(graph_id, start_node, goal_node, order_type, algorithm_type)
 
         session = BFSSession(graph_id, start_node, goal_node, order_type, speed)
         session.result = result

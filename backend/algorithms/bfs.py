@@ -33,6 +33,7 @@ class BFSResult(BaseModel):
     start_node: str
     goal_node: str
     history: List[BFSStep]
+    algorithm_type: str = "bfs"
 
     class Config:
         json_schema_extra = {
@@ -182,6 +183,99 @@ class BFSAlgorithm(SearchAlgorithm):
 
         path.reverse()
         return path
+
+    def get_steps(self) -> List[BFSStep]:
+        return self.history
+
+
+class DFSAlgorithm(SearchAlgorithm):
+    def __init__(self):
+        self.history: List[BFSStep] = []
+
+    def search(
+        self,
+        graph,
+        start: str,
+        goal: str,
+        neighbor_order_fn: Optional[Callable[[List[str]], List[str]]] = None
+    ) -> BFSResult:
+        if neighbor_order_fn is None:
+            neighbor_order_fn = lambda neighbors: sorted(neighbors)
+
+        if start not in graph.nodes:
+            raise ValueError(f"Start node {start} does not exist in graph")
+        if goal not in graph.nodes:
+            raise ValueError(f"Goal node {goal} does not exist in graph")
+
+        start_time = time.time()
+        stack = [start]
+        visited = {start}
+        parent = {start: None}
+        self.history = []
+        step = 0
+
+        while stack:
+            current = stack.pop()
+            self.history.append(BFSStep(
+                step_number=step,
+                current_node=current,
+                queue=list(stack),
+                visited=list(visited),
+                parent=parent.copy(),
+                action=BFSAction.VISIT
+            ))
+
+            if current == goal:
+                path = BFSAlgorithm()._reconstruct_path(parent, start, goal)
+                execution_time = (time.time() - start_time) * 1000
+                self.history.append(BFSStep(
+                    step_number=step + 1,
+                    current_node=goal,
+                    queue=[],
+                    visited=list(visited),
+                    parent=parent.copy(),
+                    action=BFSAction.COMPLETE
+                ))
+                return BFSResult(
+                    path=path,
+                    path_length=len(path),
+                    steps_count=step + 1,
+                    visited_nodes=len(visited),
+                    execution_time_ms=round(execution_time, 3),
+                    start_node=start,
+                    goal_node=goal,
+                    history=self.history,
+                    algorithm_type="dfs"
+                )
+
+            neighbors = neighbor_order_fn(graph.adjacency_list.get(current, []))
+            for neighbor in reversed(neighbors):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    parent[neighbor] = current
+                    stack.append(neighbor)
+                    self.history.append(BFSStep(
+                        step_number=step,
+                        current_node=neighbor,
+                        queue=list(stack),
+                        visited=list(visited),
+                        parent=parent.copy(),
+                        action=BFSAction.ENQUEUE
+                    ))
+            step += 1
+
+        execution_time = (time.time() - start_time) * 1000
+        return BFSResult(
+            path=[],
+            path_length=0,
+            steps_count=step,
+            visited_nodes=len(visited),
+            execution_time_ms=round(execution_time, 3),
+            start_node=start,
+            goal_node=goal,
+            history=self.history,
+            algorithm_type="dfs"
+        )
 
     def get_steps(self) -> List[BFSStep]:
         return self.history

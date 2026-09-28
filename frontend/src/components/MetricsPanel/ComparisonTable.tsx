@@ -14,7 +14,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ forwardResult,
           Порівняння дзеркальних напрямків
         </h3>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          Запустіть BFS в обох напрямках для порівняння результатів
+          Запустіть обхід в обох напрямках для порівняння результатів
         </p>
       </div>
     );

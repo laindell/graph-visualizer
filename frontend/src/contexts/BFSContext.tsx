@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { BFSResult, BFSStep, BFSMetrics, BFSConfig, OrderType } from '@/types/graph.types';
+import { BFSResult, BFSStep, BFSMetrics, BFSConfig, OrderType, AlgorithmType } from '@/types/graph.types';
 import { wsService } from '@/services/websocket';
 
 interface BFSContextType {
@@ -12,7 +12,7 @@ interface BFSContextType {
   metrics: BFSMetrics | null;
   config: BFSConfig | null;
   error: string | null;
-  startBFS: (graphId: string, startNode: string, goalNode: string, orderType: OrderType, speed: number) => void;
+  startBFS: (graphId: string, startNode: string, goalNode: string, orderType: OrderType, speed: number, algorithmType?: AlgorithmType) => void;
   pauseBFS: () => void;
   resumeBFS: () => void;
   stopBFS: () => void;
@@ -75,7 +75,8 @@ export const BFSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     startNode: string,
     goalNode: string,
     orderType: OrderType,
-    speed: number
+    speed: number,
+    algorithmType: AlgorithmType = 'bfs'
   ) => {
     setIsRunning(true);
     setIsPaused(false);
@@ -84,8 +85,8 @@ export const BFSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentStepData(null);
     setMetrics(null);
     setError(null);
-    setConfig({ start_node: startNode, goal_node: goalNode, order_type: orderType, speed });
-    wsService.startBFS(graphId, startNode, goalNode, orderType, speed);
+    setConfig({ start_node: startNode, goal_node: goalNode, order_type: orderType, speed, algorithm_type: algorithmType });
+    wsService.startBFS(graphId, startNode, goalNode, orderType, speed, algorithmType);
   }, []);
 
   const pauseBFS = useCallback(() => {

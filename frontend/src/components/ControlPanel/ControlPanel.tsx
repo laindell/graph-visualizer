@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
-import { Play, Pause, Square, SkipForward, SkipBack, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, Square, SkipForward, SkipBack, ChevronsLeft, ChevronsRight, ArrowLeftRight } from 'lucide-react';
 import { useBFS } from '@/contexts/BFSContext';
 import { useGraph } from '@/contexts/GraphContext';
-import { GraphType, OrderType } from '@/types/graph.types';
+import { AlgorithmType, OrderType } from '@/types/graph.types';
 import { Modal } from '@/components/Modal/Modal';
 import { useModal } from '@/hooks/useModal';
-import { SearchableSelect } from '@/components/SearchableSelect/SearchableSelect';
 
-export const ControlPanel: React.FC = () => {
+interface ControlPanelProps {
+  startNode: string | null;
+  goalNode: string | null;
+  onStartNodeChange: (nodeId: string | null) => void;
+  onGoalNodeChange: (nodeId: string | null) => void;
+}
+
+export const ControlPanel: React.FC<ControlPanelProps> = ({
+  startNode,
+  goalNode,
+  onStartNodeChange,
+  onGoalNodeChange,
+}) => {
   const { activeGraph } = useGraph();
   const {
     isRunning,
@@ -23,28 +34,25 @@ export const ControlPanel: React.FC = () => {
     seekToStep,
   } = useBFS();
 
-  const [startNode, setStartNode] = useState<string>('');
-  const [goalNode, setGoalNode] = useState<string>('');
   const [orderType, setOrderType] = useState<OrderType>('id_asc');
   const [speed, setSpeed] = useState<number>(1);
+  const [algorithmType, setAlgorithmType] = useState<AlgorithmType>('bfs');
 
   const { modalState, showAlert, closeModal } = useModal();
 
-  const nodes = activeGraph ? Object.keys(activeGraph.nodes) : [];
-
   const handleStart = () => {
     if (!activeGraph || !startNode || !goalNode) {
-      showAlert('Помилка', 'Будь ласка, оберіть початкову та цільову вершини');
+      showAlert('Помилка', 'Будь ласка, оберіть початкову та цільову вершини (клацніть на вершини на полотні)');
       return;
     }
 
-    startBFS(activeGraph.id, startNode, goalNode, orderType, speed);
+    startBFS(activeGraph.id, startNode, goalNode, orderType, speed, algorithmType);
   };
 
   const handleSwapNodes = () => {
     const temp = startNode;
-    setStartNode(goalNode);
-    setGoalNode(temp);
+    onStartNodeChange(goalNode);
+    onGoalNodeChange(temp);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,31 +63,83 @@ export const ControlPanel: React.FC = () => {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6 space-y-6">
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <SearchableSelect
-            label="Початок"
-            value={startNode}
-            onChange={setStartNode}
-            options={nodes}
-            placeholder="Оберіть початок"
-            disabled={isRunning}
-          />
+        <div>
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Алгоритм обходу
+          </span>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Алгоритм обходу">
+            {(['bfs', 'dfs'] as const).map((algorithm) => (
+              <button
+                key={algorithm}
+                type="button"
+                onClick={() => setAlgorithmType(algorithm)}
+                disabled={isRunning}
+                aria-pressed={algorithmType === algorithm}
+                className={`px-4 py-2 rounded-md border font-medium transition-colors disabled:cursor-not-allowed ${
+                  algorithmType === algorithm
+                    ? 'bg-primary-600 border-primary-600 text-white'
+                    : 'bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                {algorithm.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          <SearchableSelect
-            label="Ціль"
-            value={goalNode}
-            onChange={setGoalNode}
-            options={nodes}
-            placeholder="Оберіть ціль"
-            disabled={isRunning}
-          />
+        {/* Індикатори вибраних вершин */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Початок
+            </label>
+            <div className={`px-4 py-3 rounded-md border-2 text-center font-mono text-lg transition-all ${
+              startNode
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-700 dark:text-green-400'
+                : 'bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-400 dark:text-gray-500'
+            }`}>
+              {startNode || '—'}
+            </div>
+            {startNode && (
+              <button
+                onClick={() => onStartNodeChange(null)}
+                disabled={isRunning}
+                className="mt-2 w-full text-xs text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Скинути
+              </button>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Ціль
+            </label>
+            <div className={`px-4 py-3 rounded-md border-2 text-center font-mono text-lg transition-all ${
+              goalNode
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400'
+                : 'bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-slate-600 text-gray-400 dark:text-gray-500'
+            }`}>
+              {goalNode || '—'}
+            </div>
+            {goalNode && (
+              <button
+                onClick={() => onGoalNodeChange(null)}
+                disabled={isRunning}
+                className="mt-2 w-full text-xs text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Скинути
+              </button>
+            )}
+          </div>
         </div>
 
         <button
           onClick={handleSwapNodes}
           disabled={isRunning || !startNode || !goalNode}
-          className="w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-md hover:bg-primary-200 dark:hover:bg-primary-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium"
         >
+          <ArrowLeftRight size={18} />
           Поміняти місцями
         </button>
 
@@ -127,7 +187,7 @@ export const ControlPanel: React.FC = () => {
               className="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-md font-medium flex items-center justify-center gap-2 transition-colors"
             >
               <Play size={18} />
-              Запустити BFS
+              Запустити {algorithmType.toUpperCase()}
             </button>
           ) : (
             <>
